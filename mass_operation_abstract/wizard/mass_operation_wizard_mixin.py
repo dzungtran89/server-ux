@@ -44,24 +44,26 @@ class MassOperationWizardMixin(models.AbstractModel):
         operation_description_danger = False
 
         # Compute items quantity
-        active_ids = self.env.context.get("active_ids")
+        active_ids = self._context.get("active_ids")
         remaining_items = self._get_remaining_items()
 
         if len(active_ids) == len(remaining_items):
             operation_description_info = _(
-                "The treatment will be processed on the %d selected"
-                " elements." % (len(active_ids))
+                "The treatment will be processed on the {} selected"
+                " elements.".format(len(active_ids))
             )
         elif len(remaining_items):
             operation_description_warning = _(
-                "You have selected %d items that can not be processed."
-                " Only %d items will be processed."
-                % (len(active_ids) - len(remaining_items), len(remaining_items))
+                "You have selected {} items that can not be processed."
+                " Only {} items will be processed.".format(
+                    len(active_ids) - len(remaining_items), len(remaining_items)
+                )
             )
         else:
             operation_description_danger = _(
-                "None of the %d items you have selected can be processed."
-                % (len(active_ids))
+                "None of the {} items you have selected can be processed.".format(
+                    len(active_ids)
+                )
             )
 
         res.update(
@@ -81,7 +83,7 @@ class MassOperationWizardMixin(models.AbstractModel):
         if not len(items):
             raise UserError(
                 _(
-                    "there is no more element that corresponds to the rules of"
+                    "There is no more element that corresponds to the rules of"
                     " the domain.\n Please refresh your list and try to"
                     " select again the items."
                 )
@@ -93,24 +95,28 @@ class MassOperationWizardMixin(models.AbstractModel):
     def _get_mass_operation(self):
         IrModel = self.env["ir.model"]
         mass_operation_models = IrModel.search(
-            [("model", "=", self.env.context.get("mass_operation_mixin_name", False))]
+            [("model", "=", self._context.get("mass_operation_mixin_name", False))]
         )
+
         if len(mass_operation_models) != 1:
             return False
+
         MassOperationModel = self.env[mass_operation_models[0].model]
         return MassOperationModel.search(
-            [("id", "=", self.env.context.get("mass_operation_mixin_id", 0))]
+            [("id", "=", self._context.get("mass_operation_mixin_id", 0))]
         )
 
     @api.model
     def _get_remaining_items(self):
-        active_ids = self.env.context.get("active_ids", [])
+        active_ids = self._context.get("active_ids", [])
         mass_operation = self._get_mass_operation()
         SrcModel = self.env[mass_operation.model_id.model]
+
         if mass_operation.domain != "[]":
             domain = expression.AND(
                 [safe_eval(mass_operation.domain), [("id", "in", active_ids)]]
             )
         else:
             domain = [("id", "in", active_ids)]
+
         return SrcModel.search(domain)

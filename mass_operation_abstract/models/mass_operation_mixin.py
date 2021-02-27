@@ -15,7 +15,7 @@ class MassOperationMixin(models.AbstractModel):
 
     # To Overwrite Section (Optional)
     def _prepare_action_name(self):
-        return _("Mass Operation (%s)" % (self.name))
+        return _("Mass Operation ({})".format(self.name))
 
     def _get_model_domain(self):
         return [("transient", "=", False)]
@@ -27,7 +27,7 @@ class MassOperationMixin(models.AbstractModel):
 
     message = fields.Text(
         string="Message",
-        help="If set, this message will be displayed in the" " wizard.",
+        help="If set, this message will be displayed in the wizard.",
     )
 
     model_id = fields.Many2one(
@@ -72,7 +72,7 @@ class MassOperationMixin(models.AbstractModel):
 
     def copy(self, default=None):
         default = default or {}
-        default.update({"name": _("%s (copy)") % self.name})
+        default.update({"name": _("{} (copy)").format(self.name)})
         return super().copy(default=default)
 
     # Private Section
@@ -83,11 +83,12 @@ class MassOperationMixin(models.AbstractModel):
             "type": "ir.actions.act_window",
             "res_model": self._wizard_model_name,
             "groups_id": [(6, 0, self.groups_id.ids)],
-            "context": """{
-                'mass_operation_mixin_id' : %d,
-                'mass_operation_mixin_name' : '%s',
-            }"""
-            % (self.id, self._name),
+            "context": """{{
+                'mass_operation_mixin_id': {},
+                'mass_operation_mixin_name': '{}',
+            }}""".format(
+                self.id, self._name
+            ),
             "view_mode": "form",
             "target": "new",
             "binding_model_id": self.model_id.id,
